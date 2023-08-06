@@ -1,0 +1,27 @@
+/root/miniconda3/lib/python3.8/site-packages/mmfewshot/detection/datasets/
+/root/miniconda3/lib/python3.8/site-packages/mmdet/datasets/pipelines/loading.py"
+
+
+ln -s /root/autodl-tmp/datasets/VOC2007 /root/projects/VFA/data/VOCdevkit/VOC2007
+ln -s /root/autodl-tmp/datasets/VOC2012 /root/projects/VFA/data/VOCdevkit/VOC2012
+ln -s /root/autodl-tmp/datasets/vocsplit /root/projects/VFA/data/VOCdevkit/vocsplit
+
+
+
+# Stage I: base training.
+bash dist_train.sh configs/vfa/voc/vfa_split1/vfa_r101_c4_8xb4_voc-split{1,2,3}_base-training.py 8
+
+train.py configs/vfa/voc/vfa_split1/vfa_r101_c4_8xb4_voc-split1_base-training.py
+
+# Stage II: few-shot fine-tuning on all splits and shots.
+voc_config_dir=configs/vfa/voc/
+for split in 1 2 3; do
+    for shot in 1 2 3 5 10; do
+        config_path=${voc_config_dir}/vfa_split${split}/vfa_r101_c4_8xb4_voc-split${split}_${shot}shot-fine-tuning.py
+        echo $config_path
+        bash dist_train.sh $config_path 8
+    done
+done
+train.py configs/vfa/voc/vfa_split1/vfa_r101_c4_8xb4_voc-split1_1shot-fine-tuning.py
+
+projects/VFA/work_dirs/vfa_r101_c4_8xb4_voc-split1_base-training/
